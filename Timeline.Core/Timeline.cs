@@ -2700,8 +2700,14 @@ namespace Timeline
                                         float referenceOldTime = reference.parent.keyframes.Keys[reference.parent.keyframes.IndexOfValue(reference)];
                                         bool forward = ordered[0].Value >= referenceOldTime;
                                         ordered.Sort((a, b) => forward ? b.Value.CompareTo(a.Value) : a.Value.CompareTo(b.Value));
+
                                         foreach (KeyValuePair<Keyframe, float> move in ordered)
-                                            TryMoveKeyframe(move.Key, move.Value); // precheck above guarantees success
+                                        {
+                                            if (!TryMoveKeyframe(move.Key, move.Value))
+                                            {
+                                                Logger.LogError("Move to " + move.Value + " failed despite passing the collision precheck");
+                                            }
+                                        }
                                     }
 
                                     e.Reset();
@@ -2824,7 +2830,11 @@ namespace Timeline
             {
                 KeyValuePair<float, Keyframe> pair = _selectedKeyframes[i];
                 float newTime = (float)(((pair.Key - min) * newSize) / currentSize + min);
-                TryMoveKeyframe(pair.Value, newTime);
+
+                if (!TryMoveKeyframe(pair.Value, newTime))
+                {
+                    Logger.LogError("Scale to " + newTime + " failed despite passing the collision precheck");
+                }
             }
             UpdateKeyframeWindow(false);
             UpdateGrid();
